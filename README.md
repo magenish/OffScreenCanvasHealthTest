@@ -8,7 +8,12 @@ The web worker would draw on the canvas (the same 4 colors canvas as we do the t
 
 
 
-In order to make this work you will need to have node installed.
+In order to make this work you have 2 options:
+Option #1 - just visit the github page at:
+https://magenish.github.io/OffScreenCanvasHealthTest/
+
+Option #2 - clone the gitrepo and run it locally:
+you will need to have node installed.
 1. Run "npm install connect -S" from the folder
 2. Run "npm install serve-static -S" from the folder
 3. Run “node server.js” from the folder
