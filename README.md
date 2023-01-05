@@ -9,6 +9,7 @@ The web worker would draw on the canvas (the same 4 colors canvas as we do the t
 
 
 In order to make this work you have 2 options:
+
 Option #1 - just visit the github page at:
 https://magenish.github.io/OffScreenCanvasHealthTest/
 
