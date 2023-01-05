@@ -1,7 +1,7 @@
-var canvas = undefined;
+var globalCanvas = undefined;
 self.onmessage = function(evt) {
-    canvas = evt.data.canvas;
-    createTestableCanvasElement(canvas);  
+    globalCanvas = evt.data.canvas;
+    createTestableCanvasElement();  
     // spin up periodical health test.
     setInterval(healthTest, 1000);
   }; 
@@ -21,8 +21,8 @@ self.onmessage = function(evt) {
 
 
 function healthTest() {
-  var imgData = canvas.getContext("2d").getImageData(0, 0, 2, 2);
-  createTestableCanvasElement(canvas);
+  var imgData = globalCanvas.getContext("2d").getImageData(0, 0, 2, 2);
+  createTestableCanvasElement();
   const result = validateCanvasPattern(imgData);
 
   switch (result) {
@@ -40,14 +40,42 @@ function healthTest() {
   }
 }
 
+function createTestableCanvasElement() {
+  try {
+    globalCanvas.id = "myCanvas";
+      // Set the canvas dimensions
+      globalCanvas.width = "400";
+      globalCanvas.height = "400";
+
+      var ctx = globalCanvas.getContext("2d", { willReadFrequently: false });
+      drawSamplePatternOnCanvas(ctx);
+  }
+  catch (exception) {
+      return null;
+  }
+}
+
 function validateCanvasPattern(imageData) {
   const redResult = validatePixel(imageData, { color: "red", x: 0, y: 0 });
+  const greenResult = validatePixel(imageData, { color: "green", x: 1, y: 0 });
+  const blueResult = validatePixel(imageData, { color: "blue", x: 0, y: 1 });
+  const yellowResult = validatePixel(imageData, { color: "yellow", x: 1, y: 1 });
 
-  if (redResult === PixelCompareResult.success) {
+  if (
+    redResult === PixelCompareResult.success &&
+    greenResult === PixelCompareResult.success &&
+    blueResult === PixelCompareResult.success &&
+    yellowResult === PixelCompareResult.success
+  ) {
     return PixelCompareResult.success;
   }
 
-  if (redResult === PixelCompareResult.failedWithBlackColor) {
+  if (
+    redResult === PixelCompareResult.failedWithBlackColor &&
+    greenResult === PixelCompareResult.failedWithBlackColor &&
+    blueResult === PixelCompareResult.failedWithBlackColor &&
+    yellowResult === PixelCompareResult.failedWithBlackColor
+  ) {
     return PixelCompareResult.failedWithBlackColor;
   }
 
@@ -59,17 +87,23 @@ function validatePixel(imageData, pixel) {
   // Each pixel is represented by 4 bytes ordered RGBA
   const offset = 4 * (imageData.width * pixel.y + pixel.x);
   const red = imageData.data[offset];
+  const green = imageData.data[offset + 1];
+  const blue = imageData.data[offset + 2];
+  const alpha = imageData.data[offset + 3];
 
-  if (!arePixelByteWithinErrorRange(red, pixel.color.r)) {
-    if (!red) {
+  if (!arePixelByteWithinErrorRange(red, 255) ||
+  !arePixelByteWithinErrorRange(green, 0) ||
+  !arePixelByteWithinErrorRange(blue, 0) ||
+  !arePixelByteWithinErrorRange(alpha, 255)) {
+    if (!red && !green && !blue && !alpha) {
       // pixel buffer is empty (black pixel = 0x000000)
       return PixelCompareResult.failedWithBlackColor;
     }
 
-    return PixelCompareResult.success;
+    return PixelCompareResult.failed;
   }
 
-  return 0;
+  return PixelCompareResult.success;
 }
 
 function arePixelByteWithinErrorRange(byte1, byte2) {
@@ -83,27 +117,6 @@ function arePixelByteWithinErrorRange(byte1, byte2) {
 
   return false;
 }
-
-function createTestableCanvasElement(canvas) {
-    try {
-        var canvas = createTestableCanvasElementHelper(400, "myCanvas", canvas);
-        var ctx = canvas.getContext("2d", { willReadFrequently: false });
-        drawSamplePatternOnCanvas(ctx);
-        return canvas;
-    }
-    catch (exception) {
-        return null;
-    }
-}
-
-function createTestableCanvasElementHelper(size, id, canvas) {
-    canvas.id = id;
-    // Set the canvas dimensions
-    canvas.width = size.toString();
-    canvas.height = size.toString();
-    return canvas;
-}
-
 
 /**
  * Draw Sample pattern on the canvas with 1px of each color:
