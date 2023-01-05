@@ -12,7 +12,7 @@ In order to make this work you will need to have node installed.
 1. Run "npm install connect -S" from the folder
 2. Run "npm install serve-static -S" from the folder
 3. Run “node server.js” from the folder
-4. Browse into http://localhost:1337/test.html from chrome.
+4. Browse into http://localhost:1337/ from chrome.
 5. Open the dev tools console to see the health test results: ![image](https://user-images.githubusercontent.com/53221799/210751627-933bbc6e-e213-4a73-bf62-33a4a9f1da37.png)
 
 6. Now lets validate that the health test catches issues. To do that we going to imitate GPU crash by terminating the GPU process.
