@@ -1,4 +1,6 @@
 var globalCanvas = undefined;
+var cnt = 0;
+var font = "50px serif";
 self.onmessage = function (evt) {
     globalCanvas = evt.data.canvas;
     createTestableCanvasElement();
@@ -40,6 +42,7 @@ function createTestableCanvasElement() {
         // Set the canvas dimensions
         globalCanvas.width = "400";
         globalCanvas.height = "400";
+        cnt++;
         var ctx = globalCanvas.getContext("2d", { willReadFrequently: false });
         drawSamplePatternOnCanvas(ctx);
     }
@@ -51,7 +54,11 @@ function validateCanvasPattern(imageData) {
     var redResult = validatePixel(imageData, { color: "red", x: 0, y: 0 });
     var greenResult = validatePixel(imageData, { color: "green", x: 1, y: 0 });
     var blueResult = validatePixel(imageData, { color: "blue", x: 0, y: 1 });
-    var yellowResult = validatePixel(imageData, { color: "yellow", x: 1, y: 1 });
+    var yellowResult = validatePixel(imageData, {
+        color: "yellow",
+        x: 1,
+        y: 1
+    });
     if (redResult === PixelCompareResult.success &&
         greenResult === PixelCompareResult.success &&
         blueResult === PixelCompareResult.success &&
@@ -110,4 +117,6 @@ function drawSamplePatternOnCanvas(ctx) {
 function drawPixel(ctx, pixel) {
     ctx.fillStyle = pixel.color;
     ctx.fillRect(pixel.x, pixel.y, 100, 100);
+    ctx.font = font;
+    ctx.fillText(cnt.toString(), pixel.x, pixel.y);
 }
