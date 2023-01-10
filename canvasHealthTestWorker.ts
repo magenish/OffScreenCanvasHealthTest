@@ -1,6 +1,64 @@
+class Color {
+  private r: number;
+  private g: number;
+  private b: number;
+  private static _white: Color = null;
+  private static _red: Color = null;
+
+  /**
+   * Initializes a new instance of the @see Color class.
+   * Although this method allows a 32-bit value to be passed for each
+   * component, the value of each component is limited to 8 bits.
+   *
+   * @param red   The red component. Valid values are 0 through 255.
+   * @param green   The green component. Valid values are 0 through 255.
+   * @param blue   The blue component. Valid values are 0 through 255.
+   */
+  public constructor(red: number, green: number, blue: number) {
+    this.r = Color.castToByte(red, "red");
+    this.g = Color.castToByte(green, "green");
+    this.b = Color.castToByte(blue, "blue");
+  }
+
+  private static castToByte(value: number, name: string): number {
+    if (value < 0 || value > 255) {
+      console.log(
+        `Color.CastToByte: The '${name}' component value is out of range: ${value}`
+      );
+      throw new Error(
+        `${name} The RGB component is out of range. Valid values are 0 through 255.`
+      );
+    }
+
+    return value as number;
+  }
+}
+
+class ColorTranslator {
+  public static toHtml(color): string {
+    const redHex = this.hexStringFromByte(color.r);
+    const greenHex = this.hexStringFromByte(color.g);
+    const blueHex = this.hexStringFromByte(color.b);
+    return "#" + redHex + greenHex + blueHex;
+  }
+  
+  private static hexStringFromByte(value: number): string {
+    const hex = value.toString(16);
+    return hex.length === 2 ? hex : "0" + hex;
+  }
+}
+
 var globalCanvas = undefined;
 var cnt = 0;
 const font = "50px serif";
+const redColor = new Color(255, 0, 0);
+const redPixel = {color:redColor , x: 0, y: 0 };
+const greenColor = new Color(0, 255, 0);
+const greenPixel = {color:greenColor , x: 1, y: 0 };
+const blueColor = new Color(0, 0, 255);
+const bluePixel = {color:blueColor , x: 0, y: 1 };
+const yellowColor = new Color(255, 255, 0);
+const yellowPixel = {color:yellowColor , x: 1, y: 1 };
 self.onmessage = function (evt) {
   globalCanvas = evt.data.canvas;
   createTestableCanvasElement();
@@ -23,6 +81,7 @@ enum CanvasHealthCheckResult {
 
 function healthTest() {
   var imgData = globalCanvas.getContext("2d").getImageData(0, 0, 2, 2);
+  disposeCanvas();
   createTestableCanvasElement();
   const result = validateCanvasPattern(imgData);
 
@@ -45,10 +104,10 @@ function createTestableCanvasElement() {
   try {
     globalCanvas.id = "myCanvas";
     // Set the canvas dimensions
-    globalCanvas.width = "400";
-    globalCanvas.height = "400";
+    globalCanvas.width = 2;
+    globalCanvas.height = 2;
     cnt++;
-    var ctx = globalCanvas.getContext("2d", { willReadFrequently: false });
+    var ctx = globalCanvas.getContext("2d");
     drawSamplePatternOnCanvas(ctx);
   } catch (exception) {
     return null;
@@ -56,14 +115,10 @@ function createTestableCanvasElement() {
 }
 
 function validateCanvasPattern(imageData) {
-  const redResult = validatePixel(imageData, { color: "red", x: 0, y: 0 });
-  const greenResult = validatePixel(imageData, { color: "green", x: 1, y: 0 });
-  const blueResult = validatePixel(imageData, { color: "blue", x: 0, y: 1 });
-  const yellowResult = validatePixel(imageData, {
-    color: "yellow",
-    x: 1,
-    y: 1,
-  });
+  const redResult = validatePixel(imageData, redPixel);
+  const greenResult = validatePixel(imageData, greenPixel);
+  const blueResult = validatePixel(imageData, bluePixel);
+  const yellowResult = validatePixel(imageData, yellowPixel);
 
   if (
     redResult === PixelCompareResult.success &&
@@ -96,9 +151,9 @@ function validatePixel(imageData, pixel) {
   const alpha = imageData.data[offset + 3];
 
   if (
-    !arePixelByteWithinErrorRange(red, 255) ||
-    !arePixelByteWithinErrorRange(green, 0) ||
-    !arePixelByteWithinErrorRange(blue, 0) ||
+    !arePixelByteWithinErrorRange(red, pixel.color.r) ||
+    !arePixelByteWithinErrorRange(green, pixel.color.g) ||
+    !arePixelByteWithinErrorRange(blue, pixel.color.b) ||
     !arePixelByteWithinErrorRange(alpha, 255)
   ) {
     if (!red && !green && !blue && !alpha) {
@@ -131,14 +186,17 @@ function arePixelByteWithinErrorRange(byte1, byte2) {
  * |  Blue  | Yellow |
  */
 function drawSamplePatternOnCanvas(ctx) {
-  drawPixel(ctx, { color: "red", x: 0, y: 0 });
-  drawPixel(ctx, { color: "green", x: 100, y: 0 });
-  drawPixel(ctx, { color: "blue", x: 0, y: 100 });
-  drawPixel(ctx, { color: "yellow", x: 100, y: 100 });
+  drawPixel(ctx, redPixel);
+  drawPixel(ctx, greenPixel);
+  drawPixel(ctx, bluePixel);
+  drawPixel(ctx, yellowPixel);
 }
 function drawPixel(ctx, pixel) {
-  ctx.fillStyle = pixel.color;
-  ctx.fillRect(pixel.x, pixel.y, 100, 100);
-  ctx.font = font;
-  ctx.fillText(cnt.toString(), pixel.x, pixel.y);
+  ctx.fillStyle = ColorTranslator.toHtml(pixel.color);
+  ctx.fillRect(pixel.x, pixel.y, 1, 1);
+}
+
+function disposeCanvas() {
+  globalCanvas.width = 0;
+  globalCanvas.height = 0;
 }
